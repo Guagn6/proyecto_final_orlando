@@ -8,6 +8,7 @@ import seaborn as sns
 import matplotlib.dates as mdates
 
 # Cargar variables desde .env
+# Comentario de prueba
 load_dotenv()
 
 DB_HOST = os.getenv("DB_HOST")
