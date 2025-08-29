@@ -1,19 +1,39 @@
+import os
+from dotenv import load_dotenv
+import mysql.connector
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
 import seaborn as sns
 import numpy as np
 from scipy.stats import ttest_ind
 import json
-import boto3 # dependendcias agregadas
-from botocore.exceptions import ClientError
+# import boto3 # dependendcias agregadas
+# from botocore.exceptions import ClientError
 
-lambda_client = boto3.client("lambda", region_name="us-east-1")
+""" lambda_client = boto3.client("lambda", region_name="us-east-1")
 s3 = boto3.client("s3")
 
 BUCKET = "xideralaws-curso-orlando"
 KEY = "student-performance.csv"
-LAMBDA_NAME = "lambda-function"
+LAMBDA_NAME = "lambda-function" """
+
+# Cargar variables desde .env
+load_dotenv()
+
+DB_HOST = os.getenv("DB_HOST")
+DB_USER = os.getenv("DB_USER")
+DB_PASS = os.getenv("DB_PASS")
+DB_NAME = os.getenv("DB_NAME")
+
+def get_connection():
+    return mysql.connector.connect(
+        host=DB_HOST,
+        user=DB_USER,
+        password=DB_PASS,
+        database=DB_NAME
+    )
 
 # Configuración de la página
 st.set_page_config(
@@ -30,10 +50,47 @@ if 'df' not in st.session_state:
 if 'show_analysis' not in st.session_state:
     st.session_state.show_analysis = False
 
-# Función simulada para llamar a AWS Lambda (en un entorno real necesitarías las credenciales AWS)
+# Función AWS Lambda (en entorno real requiere las credenciales AWS)
+@st.cache_data
 def aws_lambda_processing(file_content):
-    mode = st.sidebar.radio("Modo de carga", ["json", "parquet"])
+    df = pd.read_csv(file_content)
     
+    df_clean = df.dropna()  # Eliminar filas con valores nulos
+    # df_clean = df_clean.drop_duplicates(subset=['StudentID'])  # Si debe permitir duplicados
+    
+    try:
+        # Configuración MySQL (ajusta estos valores)
+        connection = mysql.connector.connect(
+            host='localhost',
+            database='student_performance_db',
+            user='tu_usuario',
+            password='tu_password'
+        )
+        
+        cursor = connection.cursor()
+        
+        # Insertar registros del DataFrame
+        for _, row in df_clean.iterrows():
+            cursor.execute("""
+                INSERT INTO student_performance 
+                (StudentID, Age, Gender, Ethnicity, ParentalEducation, StudyTimeWeekly, 
+                 Absences, Tutoring, ParentalSupport, Extracurricular, Sports, Music, 
+                 Volunteering, GPA, GradeClass)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, tuple(row))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        st.success(f"✅ {len(df_clean)} registros guardados en MySQL")
+        
+    except Exception as e:
+        st.error(f"Error guardando en MySQL: {e}")
+    
+    return df_clean
+    
+    """ mode = st.sidebar.radio("Modo de carga", ["json", "parquet"])
     if st.sidebar.button("Procesar archivo"):
         payload = {"bucket": BUCKET, "key": KEY, "mode": mode}
         
@@ -49,13 +106,13 @@ def aws_lambda_processing(file_content):
             body = json.loads(result["body"])
             
             if mode == "json":
-                st.success("Datos obtenidos como JSON ✅")
+                st.success("Datos obtenidos como JSON")
                 df = pd.DataFrame(body["data"])
                 st.write("Vista previa:")
                 st.dataframe(df)
 
             else:
-                st.success("Archivo limpio guardado en S3 ✅")
+                st.success("Archivo limpio guardado en S3")
                 st.write("Ruta en S3:", body["s3_key"])
 
                 # Descargar Parquet procesado desde S3
@@ -70,7 +127,7 @@ def aws_lambda_processing(file_content):
             means_df = pd.DataFrame(list(means.items()), columns=["Columna", "Promedio"])
             st.bar_chart(means_df.set_index("Columna"))
         else:
-            st.error("Error al invocar Lambda")
+            st.error("Error al invocar Lambda") """
 
 # Pantalla de inicio
 def show_home_screen():
