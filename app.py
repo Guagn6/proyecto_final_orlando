@@ -331,7 +331,7 @@ def show_analysis():
     st.markdown("---")
     
     # Tabs de análisis
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Distribuciones", "📊 Comparativas", "🔗 Correlaciones", "📋 Estadísticas", "🎯 Análisis Específicos"])
+    tab1, tab2, tab3, tab4, tab5 = st.tabs([""📋 Estadísticas", 📈 Distribuciones", "📊 Comparativas", "🔗 Correlaciones", "🎯 Análisis Específicos"])
     
     with tab1:
             st.subheader("Estadísticas Descriptivas")
