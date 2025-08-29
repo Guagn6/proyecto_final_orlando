@@ -8,9 +8,16 @@ import json
 import boto3 # dependendcias agregadas
 from botocore.exceptions import ClientError
 
+lambda_client = boto3.client("lambda", region_name="us-east-1")
+s3 = boto3.client("s3")
+
+BUCKET = "xideralaws-curso-orlando"
+KEY = "student-performance.csv"
+LAMBDA_NAME = "lambda-function"
+
 # Configuración de la página
 st.set_page_config(
-    page_title="Análisis de Rendimiento Estudiantil",
+    page_title="Análisis de Datos",
     page_icon="📚",
     layout="wide"
 )
@@ -24,34 +31,46 @@ if 'show_analysis' not in st.session_state:
     st.session_state.show_analysis = False
 
 # Función simulada para llamar a AWS Lambda (en un entorno real necesitarías las credenciales AWS)
-def simulate_aws_lambda_processing(file_content):
-    """
-    Simula el procesamiento de AWS Lambda
-    En un entorno real, aquí harías la llamada real a Lambda
-    """
-    try:
-        # Simular procesamiento y limpieza de datos
-        st.info("🔄 Procesando datos con AWS Lambda...")
+def aws_lambda_processing(file_content):
+    mode = st.sidebar.radio("Modo de carga", ["json", "parquet"])
+    
+    if st.sidebar.button("Procesar archivo"):
+        payload = {"bucket": BUCKET, "key": KEY, "mode": mode}
         
-        # Simular delay de procesamiento
-        import time
-        time.sleep(2)
-        
-        # Leer los datos del archivo cargado
-        df = pd.read_csv(file_content)
-        
-        # Simular limpieza de datos
-        df = df.dropna()
-        df = df.drop_duplicates()
-        
-        st.success("✅ Datos procesados y limpiados exitosamente")
-        st.success("💾 Copia guardada en S3 bucket")
-        
-        return df
-        
-    except Exception as e:
-        st.error(f"Error en el procesamiento: {str(e)}")
-        return None
+        # Invocar Lambda
+        response = lambda_client.invoke(
+            FunctionName=LAMBDA_NAME,
+            InvocationType="RequestResponse",
+            Payload=json.dumps(payload)
+        )
+        result = json.loads(response["Payload"].read())
+
+        if result["statusCode"] == 200:
+            body = json.loads(result["body"])
+            
+            if mode == "json":
+                st.success("Datos obtenidos como JSON ✅")
+                df = pd.DataFrame(body["data"])
+                st.write("Vista previa:")
+                st.dataframe(df)
+
+            else:
+                st.success("Archivo limpio guardado en S3 ✅")
+                st.write("Ruta en S3:", body["s3_key"])
+
+                # Descargar Parquet procesado desde S3
+                obj = s3.get_object(Bucket=BUCKET, Key=body["s3_key"])
+                df = pd.read_parquet(obj["Body"])
+                st.write("Vista previa:")
+                st.dataframe(df.head())
+
+            # Ejemplo de gráfico
+            st.subheader("Promedios de columnas numéricas")
+            means = body["promedios_columnas"]
+            means_df = pd.DataFrame(list(means.items()), columns=["Columna", "Promedio"])
+            st.bar_chart(means_df.set_index("Columna"))
+        else:
+            st.error("Error al invocar Lambda")
 
 # Pantalla de inicio
 def show_home_screen():
@@ -63,10 +82,10 @@ def show_home_screen():
     with col1:
         st.header("🔄 Procesar Nuevo Archivo")
         st.markdown("""
-        **Carga un archivo nuevo para análisis:**
-        - El archivo será procesado automáticamente con AWS Lambda
+        **Carga un archivo nuevo para análizarlo:**
+        - El archivo será procesado automáticamente
         - Los datos serán limpiados y transformados
-        - Se guardará una copia en S3
+        - Se guardará una copia para futuras revisiones
         - Se mostrarán los análisis estadísticos
         """)
         
@@ -78,7 +97,7 @@ def show_home_screen():
         
         if uploaded_file is not None:
             if st.button("🚀 Procesar con AWS Lambda", type="primary"):
-                processed_df = simulate_aws_lambda_processing(uploaded_file)
+                processed_df = aws_lambda_processing(uploaded_file)
                 if processed_df is not None:
                     st.session_state.df = processed_df
                     st.session_state.data_loaded = True
