@@ -53,11 +53,24 @@ if 'show_analysis' not in st.session_state:
 # Función AWS Lambda (en entorno real requiere las credenciales AWS)
 @st.cache_data
 def aws_lambda_processing(file_content):
+    
     df = pd.read_csv(file_content)
     
-    df_clean = df.dropna()  # Eliminar filas con valores nulos
-    # df_clean = df_clean.drop_duplicates(subset=['StudentID'])  # Si debe permitir duplicados
+    numeric_columns = ['StudentID', 'Age', 'Gender', 'Ethnicity', 'ParentalEducation', 
+                      'StudyTimeWeekly', 'Absences', 'Tutoring', 'ParentalSupport', 
+                      'Extracurricular', 'Sports', 'Music', 'Volunteering', 'GPA', 'GradeClass']
     
+    for col in numeric_columns:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors='coerce')
+    
+    # Eliminar filas con valores nulos solo después de conversión
+    df_clean = df.dropna()
+
+    if len(df_clean) == 0:
+        st.error("❌ No quedaron datos válidos después de la limpieza")
+        return pd.DataFrame()
+
     try:
         # Configuración MySQL (ajusta estos valores)
         connection = get_connection
@@ -217,6 +230,16 @@ ParentalSupport,Extracurricular,Sports,Music,Volunteering,GPA,GradeClass
 def show_analysis():
     df = st.session_state.df
     
+    # ✅ AGREGAR ESTA VALIDACIÓN
+    if df is None or len(df) == 0:
+        st.error("No hay datos para mostrar")
+        return
+    
+    # Verificar que las columnas existan y tengan datos válidos
+    if 'Age' not in df.columns or df['Age'].isna().all():
+        st.error("La columna 'Age' no existe o no tiene datos válidos")
+        return
+        
     # Título principal
     st.title("📊 Análisis de Rendimiento Estudiantil")
     
