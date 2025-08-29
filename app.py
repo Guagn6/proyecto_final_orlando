@@ -90,44 +90,44 @@ def aws_lambda_processing(file_content):
     
     return df_clean
     
-    """ mode = st.sidebar.radio("Modo de carga", ["json", "parquet"])
-    if st.sidebar.button("Procesar archivo"):
-        payload = {"bucket": BUCKET, "key": KEY, "mode": mode}
+    # mode = st.sidebar.radio("Modo de carga", ["json", "parquet"])
+    # if st.sidebar.button("Procesar archivo"):
+        # payload = {"bucket": BUCKET, "key": KEY, "mode": mode}
         
         # Invocar Lambda
-        response = lambda_client.invoke(
-            FunctionName=LAMBDA_NAME,
-            InvocationType="RequestResponse",
-            Payload=json.dumps(payload)
-        )
-        result = json.loads(response["Payload"].read())
+        # response = lambda_client.invoke(
+        #     FunctionName=LAMBDA_NAME,
+        #     InvocationType="RequestResponse",
+        #     Payload=json.dumps(payload)
+        # )
+        # result = json.loads(response["Payload"].read())
 
-        if result["statusCode"] == 200:
-            body = json.loads(result["body"])
+        # if result["statusCode"] == 200:
+        #     body = json.loads(result["body"])
             
-            if mode == "json":
-                st.success("Datos obtenidos como JSON")
-                df = pd.DataFrame(body["data"])
-                st.write("Vista previa:")
-                st.dataframe(df)
+        #     if mode == "json":
+        #         st.success("Datos obtenidos como JSON")
+        #         df = pd.DataFrame(body["data"])
+        #         st.write("Vista previa:")
+        #         st.dataframe(df)
 
-            else:
-                st.success("Archivo limpio guardado en S3")
-                st.write("Ruta en S3:", body["s3_key"])
+        #     else:
+        #         st.success("Archivo limpio guardado en S3")
+        #         st.write("Ruta en S3:", body["s3_key"])
 
-                # Descargar Parquet procesado desde S3
-                obj = s3.get_object(Bucket=BUCKET, Key=body["s3_key"])
-                df = pd.read_parquet(obj["Body"])
-                st.write("Vista previa:")
-                st.dataframe(df.head())
+        #         # Descargar Parquet procesado desde S3
+        #        obj = s3.get_object(Bucket=BUCKET, Key=body["s3_key"])
+        #         df = pd.read_parquet(obj["Body"])
+        #         st.write("Vista previa:")
+        #         st.dataframe(df.head())
 
             # Ejemplo de gráfico
-            st.subheader("Promedios de columnas numéricas")
-            means = body["promedios_columnas"]
-            means_df = pd.DataFrame(list(means.items()), columns=["Columna", "Promedio"])
-            st.bar_chart(means_df.set_index("Columna"))
-        else:
-            st.error("Error al invocar Lambda") """
+        #     st.subheader("Promedios de columnas numéricas")
+        #     means = body["promedios_columnas"]
+        #     means_df = pd.DataFrame(list(means.items()), columns=["Columna", "Promedio"])
+        #     st.bar_chart(means_df.set_index("Columna"))
+        # else:
+        #     st.error("Error al invocar Lambda") """
 
 # Pantalla de inicio
 def show_home_screen():
@@ -182,6 +182,7 @@ def show_home_screen():
     # Información del formato de datos esperado
     st.markdown("---")
     st.subheader("📋 Formato de Datos Esperado")
+
     st.code("""
 StudentID,Age,Gender,Ethnicity,ParentalEducation,StudyTimeWeekly,Absences,Tutoring,
 ParentalSupport,Extracurricular,Sports,Music,Volunteering,GPA,GradeClass
