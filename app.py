@@ -5,7 +5,7 @@ import seaborn as sns
 import numpy as np
 from scipy.stats import ttest_ind
 import json
-import boto3
+import boto3 # dependendcias agregadas
 from botocore.exceptions import ClientError
 
 # Configuración de la página
