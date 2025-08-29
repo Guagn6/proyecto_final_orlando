@@ -12,12 +12,12 @@ import json
 # import boto3 # dependendcias agregadas
 # from botocore.exceptions import ClientError
 
-""" lambda_client = boto3.client("lambda", region_name="us-east-1")
-s3 = boto3.client("s3")
+# lambda_client = boto3.client("lambda", region_name="us-east-1")
+# s3 = boto3.client("s3")
 
-BUCKET = "xideralaws-curso-orlando"
-KEY = "student-performance.csv"
-LAMBDA_NAME = "lambda-function" """
+# BUCKET = "xideralaws-curso-orlando"
+# KEY = "student-performance.csv"
+# LAMBDA_NAME = "lambda-function"
 
 # Cargar variables desde .env
 load_dotenv()
@@ -30,9 +30,9 @@ DB_NAME = os.getenv("DB_NAME")
 def get_connection():
     return mysql.connector.connect(
         host=DB_HOST,
+        database=DB_NAME,
         user=DB_USER,
-        password=DB_PASS,
-        database=DB_NAME
+        password=DB_PASS
     )
 
 # Configuración de la página
@@ -60,13 +60,7 @@ def aws_lambda_processing(file_content):
     
     try:
         # Configuración MySQL (ajusta estos valores)
-        connection = mysql.connector.connect(
-            host='localhost',
-            database='student_performance_db',
-            user='tu_usuario',
-            password='tu_password'
-        )
-        
+        connection = get_connection
         cursor = connection.cursor()
         
         # Insertar registros del DataFrame
@@ -83,7 +77,7 @@ def aws_lambda_processing(file_content):
         cursor.close()
         connection.close()
         
-        st.success(f"✅ {len(df_clean)} registros guardados en MySQL")
+        st.success(f"✅ {len(df_clean)} registros guardados exitosamente")
         
     except Exception as e:
         st.error(f"Error guardando en MySQL: {e}")
@@ -129,6 +123,15 @@ def aws_lambda_processing(file_content):
         # else:
         #     st.error("Error al invocar Lambda") """
 
+# Funcion AWS para recuperar datos
+@st.cache_data
+def load_data():
+    conn = get_connection()
+    query = "SELECT * FROM student_performance;"
+    df = pd.read_sql(query, conn)
+    conn.close()
+    return df
+
 # Pantalla de inicio
 def show_home_screen():
     st.title("📚 Sistema de Análisis de Rendimiento Estudiantil")
@@ -170,14 +173,14 @@ def show_home_screen():
         - Datos previamente validados
         """)
         
-        st.selectbox(
-            "Selecciona un análisis previo:",
-            options=["Seleccionar...", "Análisis_2024_01.csv", "Análisis_2024_02.csv", "Análisis_2023_12.csv"],
-            key="previous_analysis"
-        )
-        
-        if st.button("📊 Cargar Análisis", disabled=True):
-            st.info("🚧 Funcionalidad en desarrollo - Demo únicamente")
+        if st.button("📊 Cargar Análisis", type="secondary"):
+            saved_df = load_data()
+            if saved_df is not None:
+                st.session_state.df = saved_df
+                st.session_state.data_loaded = True
+                st.session_state.show_analysis = True
+                st.rerun()
+
     
     # Información del formato de datos esperado
     st.markdown("---")
