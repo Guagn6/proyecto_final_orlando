@@ -334,6 +334,35 @@ def show_analysis():
     tab1, tab2, tab3, tab4, tab5 = st.tabs(["📈 Distribuciones", "📊 Comparativas", "🔗 Correlaciones", "📋 Estadísticas", "🎯 Análisis Específicos"])
     
     with tab1:
+            st.subheader("Estadísticas Descriptivas")
+            
+            # Estadísticas generales
+            st.write("**Estadísticas del dataset filtrado:**")
+            st.dataframe(df_filtered.describe())
+            
+            # Distribución por categorías
+            col1, col2 = st.columns(2)
+            
+            with col1:
+                st.write("**Distribución por Género:**")
+                gender_dist = df_filtered['Gender'].value_counts()
+                st.dataframe(gender_dist)
+                
+                st.write("**Distribución por Tutoría:**")
+                tutoring_dist = df_filtered['Tutoring'].value_counts()
+                st.dataframe(tutoring_dist)
+            
+            with col2:
+                st.write("**Distribución por Apoyo Parental:**")
+                support_dist = df_filtered['ParentalSupport'].value_counts()
+                st.dataframe(support_dist)
+                
+                if 'GradeClass' in df_filtered.columns:
+                    st.write("**Distribución por Clase de Calificación:**")
+                    grade_dist = df_filtered['GradeClass'].value_counts()
+                    st.dataframe(grade_dist)
+
+    with tab2:
         st.subheader("Distribución de Variables Clave")
         
         col1, col2 = st.columns(2)
@@ -365,7 +394,7 @@ def show_analysis():
         plt.ylabel("Frecuencia")
         st.pyplot(fig, clear_figure=True)
     
-    with tab2:
+    with tab3:
         st.subheader("Análisis Comparativo por Categorías")
         
         col1, col2 = st.columns(2)
@@ -430,7 +459,7 @@ def show_analysis():
             plt.ylabel("GPA")
             st.pyplot(fig, clear_figure=True)
     
-    with tab3:
+    with tab4:
         st.subheader("Análisis de Correlaciones")
         
         # 4 y 5. Matriz de correlación y mapa de calor
@@ -461,35 +490,6 @@ def show_analysis():
                 strength = "Fuerte" if abs(correlation) > 0.6 else "Moderada" if abs(correlation) > 0.3 else "Débil"
                 direction = "positiva" if correlation > 0 else "negativa"
                 st.write(f"**{row['Variable 1']}** vs **{row['Variable 2']}**: {correlation:.3f} ({strength} {direction})")
-    
-    with tab4:
-        st.subheader("Estadísticas Descriptivas")
-        
-        # Estadísticas generales
-        st.write("**Estadísticas del dataset filtrado:**")
-        st.dataframe(df_filtered.describe())
-        
-        # Distribución por categorías
-        col1, col2 = st.columns(2)
-        
-        with col1:
-            st.write("**Distribución por Género:**")
-            gender_dist = df_filtered['Gender'].value_counts()
-            st.dataframe(gender_dist)
-            
-            st.write("**Distribución por Tutoría:**")
-            tutoring_dist = df_filtered['Tutoring'].value_counts()
-            st.dataframe(tutoring_dist)
-        
-        with col2:
-            st.write("**Distribución por Apoyo Parental:**")
-            support_dist = df_filtered['ParentalSupport'].value_counts()
-            st.dataframe(support_dist)
-            
-            if 'GradeClass' in df_filtered.columns:
-                st.write("**Distribución por Clase de Calificación:**")
-                grade_dist = df_filtered['GradeClass'].value_counts()
-                st.dataframe(grade_dist)
     
     with tab5:
         st.subheader("Análisis Específicos")
